@@ -18,7 +18,7 @@ services:
       - VIRTUAL_HOST=odoo15.marlonfalcon.com
     entrypoint: "/usr/bin/odoo -c /etc/odoo/odoo.conf"
     restart: always
-  db16:
+  db15:
     platform: linux/x86_64
     container_name: ${DB_HOST}
     image: ${DB_IMAGE}:${DB_TAG}
