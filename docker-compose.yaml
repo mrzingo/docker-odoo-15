@@ -1,38 +1,50 @@
+version: '3.8'
 
 services:
+  # Odoo web service configuration
   web:
     platform: linux/x86_64
-    container_name: ${WEB_HOST}
-    image: ${WEB_IMAGE_NAME}:${WEB_IMAGE_TAG}
-    build: ./
+    container_name: ${WEB_HOST}  # Use environment variable for dynamic container naming
+    image: ${WEB_IMAGE_NAME}:${WEB_IMAGE_TAG}  # Allows for flexible image management
+    build: 
+      context: ./  # Specifies the build context
+      dockerfile: Dockerfile  # Specify your Dockerfile (if not default)
     depends_on:
-      - db15
+      - db15  # Ensures db15 service starts before web service
     ports:
-      - "${WEB_PORT}:8069"
+      - "${WEB_PORT}:8069"  # Maps host port to container port for Odoo
     volumes:
-      - odoo-web-data:/var/lib/odoo
-      - ./config:/etc/odoo
-      - ./addons:/mnt/extra-addons
-      - ./addons-customize:/mnt/extra-addons-customize
+      - odoo-web-data:/var/lib/odoo  # Persistent volume for Odoo data
+      - ./config:/etc/odoo  # Configuration files
+      - ./addons:/mnt/extra-addons  # Odoo addons
+      - ./addons-customize:/mnt/extra-addons-customize  # Customized addons
     environment:
-      - VIRTUAL_HOST=odoo15.marlonfalcon.com
-    entrypoint: "/usr/bin/odoo -c /etc/odoo/odoo.conf"
-    restart: always
+      - VIRTUAL_HOST=odoo15.marlonfalcon.com  # Virtual host for the web service
+    entrypoint: "/usr/bin/odoo -c /etc/odoo/odoo.conf"  # Custom entrypoint
+    restart: always  # Ensures the container restarts automatically
+
+  # PostgreSQL service configuration
   db15:
     platform: linux/x86_64
-    container_name: ${DB_HOST}
-    image: ${DB_IMAGE}:${DB_TAG}
+    container_name: ${DB_HOST}  # Use environment variable for dynamic container naming
+    image: ${DB_IMAGE}:${DB_TAG}  # Allows for flexible image management
     environment:
-      - POSTGRES_DB=db15
-      - POSTGRES_PASSWORD=odoo15
-      - POSTGRES_USER=odoo15
-      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_DB=db15  # Database name
+      - POSTGRES_PASSWORD=odoo15  # WARNING: Use secrets for production environments
+      - POSTGRES_USER=odoo15  # Database user
+      - PGDATA=/var/lib/postgresql/data/pgdata  # Data directory
     ports:
-      - "${DB_PORT}:5432"
+      - "${DB_PORT}:5432"  # Maps host port to container port for PostgreSQL
     volumes:
-      - odoo-db-data:/var/lib/postgresql/data/pgdata
-    restart: always
+      - odoo-db-data:/var/lib/postgresql/data/pgdata  # Persistent volume for database data
+    restart: always  # Ensures the container restarts automatically
 
 volumes:
-  odoo-db-data:
-  odoo-web-data:
+  odoo-db-data:  # Volume for PostgreSQL data
+  odoo-web-data:  # Volume for Odoo web data
+
+networks:
+  odoo-network:  # Defines a custom network for inter-service communication
+    driver: bridge
+
+# Note: Remember to assign 'web' and 'db15' services to 'odoo-network' if needed for isolated networking
